@@ -2,11 +2,9 @@ import React, { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   StyleSheet,
-  Text,
   View,
   FlatList,
   RefreshControl,
-  TextInput,
   TouchableOpacity,
   Modal,
   Alert,
@@ -15,6 +13,8 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { AppText as Text } from '../components/app-text';
+import { AppTextInput as TextInput } from '../components/app-text-input';
 import {
   Search,
   UserPlus,

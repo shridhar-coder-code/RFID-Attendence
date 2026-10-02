@@ -12,11 +12,11 @@ import {
   ListRenderItemInfo,
   RefreshControl,
   StyleSheet,
-  Text,
-  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { AppTextInput as TextInput } from '../components/app-text-input';
+import { AppText as Text } from '../components/app-text';
 
 import {
   ATTENDANCE_POLL_INTERVAL_MS,

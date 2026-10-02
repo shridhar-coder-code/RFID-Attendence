@@ -3,6 +3,7 @@
   "main": "expo/AppEntry",
   "version": "1.0.0",
   "dependencies": {
+    "@expo-google-fonts/orbitron": "^0.4.2",
     "@expo/ui": "~57.0.21",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-navigation/bottom-tabs": "^7.20.0",

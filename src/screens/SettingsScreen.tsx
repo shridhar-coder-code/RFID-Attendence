@@ -18,12 +18,12 @@ import {
   ScrollView,
   StyleSheet,
   Switch,
-  Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { AppText as Text } from '../components/app-text';
+import { AppTextInput as TextInput } from '../components/app-text-input';
 import { useAppTheme, type ThemeMode } from '../theme/colors';
 
 const SETTINGS_KEY = '@rfid_attendance_settings';
