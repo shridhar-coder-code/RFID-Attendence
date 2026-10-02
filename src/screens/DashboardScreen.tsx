@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ATTENDANCE_POLL_INTERVAL_MS, fetchStats } from '../services/api';
+import { fetchStats } from '../services/api';
 import { useAppTheme, type ThemePalette } from '../theme/colors';
 
 type DashboardStats = {
@@ -24,6 +24,8 @@ type PieChartProps = {
   absent: number;
   theme: ThemePalette;
 };
+
+const DASHBOARD_POLL_INTERVAL_MS = 3000;
 
 function PieChart({ present, absent, theme }: PieChartProps) {
   const total = present + absent;
@@ -100,7 +102,7 @@ export default function DashboardScreen() {
         setLoading(false);
       } finally {
         if (isActive) {
-          timeout = setTimeout(() => void updateStats(), ATTENDANCE_POLL_INTERVAL_MS);
+          timeout = setTimeout(() => void updateStats(), DASHBOARD_POLL_INTERVAL_MS);
         }
       }
     };
@@ -139,7 +141,7 @@ export default function DashboardScreen() {
           <View style={[styles.card, styles.totalCard, { backgroundColor: theme.cardBackground, borderColor: theme.border, borderLeftColor: theme.accent }]}>
             <View style={styles.cardHeader}>
               <Users size={24} color={theme.accent} />
-              <Text style={[styles.cardTitle, { color: theme.textSecondary }]}>Total Students</Text>
+              <Text style={[styles.cardTitle, { color: theme.textSecondary }]}>Total Registered Students</Text>
             </View>
             <Text style={[styles.cardValue, { color: theme.accent }]}>
               {stats.total}

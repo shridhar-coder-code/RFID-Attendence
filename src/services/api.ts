@@ -132,13 +132,14 @@ export async function fetchTodayAttendance(): Promise<AttendanceRecord[]> {
 
 export async function fetchStats(): Promise<AttendanceStats> {
   try {
-    const today = await fetchTodayAttendance();
+    const [students, today] = await Promise.all([fetchStudents(), fetchTodayAttendance()]);
+    const registeredUids = new Set(students.map((student) => student.uid.trim().toUpperCase()));
     const latestByStudent = new Map<string, { timestamp: number; status: string }>();
 
     today.forEach((row) => {
       const studentUid = row.uid.trim().toUpperCase();
       const timestamp = Date.parse(row.timestamp);
-      if (!studentUid || !Number.isFinite(timestamp)) return;
+      if (!registeredUids.has(studentUid) || !Number.isFinite(timestamp)) return;
 
       const previous = latestByStudent.get(studentUid);
       if (!previous || timestamp >= previous.timestamp) {
@@ -148,9 +149,10 @@ export async function fetchStats(): Promise<AttendanceStats> {
 
     const statuses = Array.from(latestByStudent.values(), (entry) => entry.status);
     const present = statuses.filter((status) => status === 'IN').length;
-    const absent = statuses.filter((status) => status === 'OUT').length;
+    const total = registeredUids.size;
+    const absent = Math.max(0, total - present);
 
-    return { total: present + absent, present, absent };
+    return { total, present, absent };
   } catch (error) {
     console.error('Stats error:', error);
     return { total: 0, present: 0, absent: 0 };
