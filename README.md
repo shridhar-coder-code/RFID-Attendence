@@ -1,56 +1,117 @@
-# Welcome to your Expo app 👋
+# RFID Attendance Logger
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A React Native / Expo app for an ESP32 and RC522 RFID attendance system. The app reads student profiles and scan logs from Firebase Realtime Database and displays live dashboard, attendance, student, and settings screens.
 
-## Get started
+## Architecture
 
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```text
+ESP32 + RC522 ── scan events / heartbeat ──> Firebase Realtime Database
+                                                │
+                                                └──> React Native app
+                                                     Dashboard / Attendance
+                                                     Students / Settings
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+The firmware is maintained separately and is not included in this repository. The app expects the database schema below.
 
-### Other setup steps
+## Firebase Data
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+Student profiles are keyed by the card UID:
 
-## Learn more
+```json
+{
+  "students": {
+    "UID_HEX_1": {
+      "name": "Student Name",
+      "rollNo": "CS101",
+      "class": "Grade 10-A"
+    }
+  }
+}
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+Attendance logs are pushed under unique Firebase keys. The app accepts either `studentUid` or `uid` and Unix-second or ISO timestamps:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```json
+{
+  "attendanceLogs": {
+    "-FirebasePushKey": {
+      "studentUid": "UID_HEX_1",
+      "status": "IN",
+      "timestamp": 1759409293,
+      "scannerId": "esp32_campus_east"
+    }
+  }
+}
+```
 
-## Join the community
+Hardware status can be stored at the root or per device:
 
-Join our community of developers creating universal apps.
+```json
+{
+  "hardwareStatus": {
+    "esp32_campus_east": {
+      "status": "online",
+      "lastHeartbeat": 1759409293
+    }
+  }
+}
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+The Settings screen checks root and per-device `lastSeen`/`lastHeartbeat` fields. It polls while Settings is open and shows hardware as connected when a heartbeat is recent.
+
+## App Features
+
+- **Dashboard:** Counts registered UIDs, uses each registered student's latest status for today's attendance, and excludes unknown cards from totals.
+- **Attendance:** Shows newest Firebase scans first, resolves UIDs against `/students`, and supports search by name, roll number, UID, or status.
+- **Students:** Adds, lists, and deletes Firebase profiles keyed by RFID UID.
+- **Settings:** Stores school and webhook preferences locally, tests the configured webhook, reports hardware status, and lets users choose Light, Dark, or System appearance.
+- **Typography:** Loads Orbitron Regular and Bold and applies them throughout the screens, form inputs, and tab labels.
+- **Navigation:** Four bottom tabs with safe-area-aware spacing and theme-aware colors.
+
+The app reads attendance and student data from Firebase. The Settings webhook button performs a connection test; RFID-to-Google-Sheets backup is handled by the separately maintained firmware when configured there.
+
+## Hardware Reference
+
+| Component | Connection | ESP32 pin |
+| --- | --- | --- |
+| RC522 RFID | SDA / SS | GPIO 5 |
+| RC522 RFID | SCK | GPIO 18 |
+| RC522 RFID | MOSI | GPIO 23 |
+| RC522 RFID | MISO | GPIO 19 |
+| RC522 RFID | RST | GPIO 4 |
+| Status LED | Check-in | GPIO 2 |
+| Status LED | Check-out | GPIO 16 |
+
+Configure Wi-Fi credentials in the firmware, not in this repository's README.
+
+## Run Locally
+
+Prerequisites: Node.js and Expo Go on a device on the same Wi-Fi network.
+
+```bash
+git clone https://github.com/shridhar-coder-code/RFID-Attendence.git
+cd RFID-Attendence
+npm install
+npx expo start --lan
+```
+
+Scan the terminal QR code with Expo Go. The dashboard and attendance feed poll Firebase while their tabs are active.
+
+## Android APK
+
+The `preview` EAS profile is configured to produce an APK:
+
+```bash
+npx eas-cli login
+npx eas-cli build -p android --profile preview
+```
+
+Download the APK from the EAS build page and install it on an Android device. Native app configuration or asset changes require a new build.
+
+## Recent Updates
+
+- Added UID-based Firebase student profiles and attendance-log joins.
+- Filtered dashboard totals to registered students and calculated absent as registered minus present.
+- Added per-device heartbeat detection, persisted Light/Dark/System themes, and Orbitron typography.
+- Configured the custom app icon, splash screen, and Android preview APK profile.
